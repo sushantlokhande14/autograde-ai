@@ -56,6 +56,27 @@ class Settings(BaseSettings):
     local_model_code: str = Field(default="qwen2.5-coder:32b", alias="LOCAL_MODEL_CODE")
     # Small model for the QuestionMapper classification call (Phase 1).
     local_model_map: str = Field(default="qwen2.5:3b", alias="LOCAL_MODEL_MAP")
+
+    # Sandbox (Phase 3): command prefix reaching the gVisor-enabled docker
+    # engine. On this Windows box that is the native engine inside WSL2 Ubuntu;
+    # on Linux it is just "docker".
+    sandbox_docker_cmd: str = Field(
+        default="wsl -d Ubuntu -u root -- docker -H unix:///run/docker-native.sock",
+        alias="SANDBOX_DOCKER_CMD",
+    )
+    sandbox_runtime: str = Field(default="runsc", alias="SANDBOX_RUNTIME")
+    sandbox_image: str = Field(default="python:3.11-slim", alias="SANDBOX_IMAGE")
+    sandbox_pool_size: int = Field(default=2, alias="SANDBOX_POOL_SIZE")
+    sandbox_timeout_s: int = Field(default=10, alias="SANDBOX_TIMEOUT_S")
+    # Directory shared with the sandbox engine. Windows writes via the
+    # \\wsl.localhost UNC path; containers bind-mount the Linux-side path.
+    sandbox_exchange_win: str = Field(
+        default=r"\\wsl.localhost\Ubuntu\tmp\autograde-sandbox",
+        alias="SANDBOX_EXCHANGE_WIN",
+    )
+    sandbox_exchange_linux: str = Field(
+        default="/tmp/autograde-sandbox", alias="SANDBOX_EXCHANGE_LINUX"
+    )
     anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
 
