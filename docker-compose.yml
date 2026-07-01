@@ -25,7 +25,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-autograde}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_locally}
     ports:
-      - "5432:5432"
+      # Host 5433 avoids clashing with a local Postgres install on 5432.
+      # In-network services still reach it as postgres:5432.
+      - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
