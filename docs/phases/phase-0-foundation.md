@@ -1,6 +1,6 @@
 # Phase 0 — Foundation & Local Setup
 
-**Status:** scaffold complete, verification pending review.
+**Status:** complete — all DoD items verified (2026-06-30).
 **Branch:** `main` (Phase 0 is foundational; feature branches start Phase 1).
 **Owner decisions in effect:** repo name `autograde-ai`; build target **native
 Windows** with Docker Desktop backing the Linux containers; Python packages
@@ -26,12 +26,19 @@ cleanup downstream.
 4. `uv sync` and `pnpm install` both succeed from a clean checkout.
 5. The commit-msg hook strips AI attribution (verified with a probe commit).
 
-Item 5 (hook) is **verified**: exercising `.githooks/commit-msg` on a sample
-message strips every attribution form while keeping real content, and no commit
-in the history carries attribution. Items 1–4 are **held for your review** — the
-scaffold is in place but the Docker stack has not been brought up and `uv`/`pnpm`
-installs have not been run yet, per the agreed kickoff mode. `docker compose`
-config validation passes for the base stack.
+**All five DoD items are verified** (bring-up run on native Windows / Docker
+Desktop, engine 27.3.1):
+
+1. `docker compose up -d` — 13/13 containers up; Postgres, Redis, Redpanda,
+   MinIO, Qdrant, Temporal, Prometheus, Grafana report healthy.
+2. `/healthz` — 19/19 backend services + the web dashboard all return `200`.
+3. Kafka round-trip — event produced, consumed by one group, replayed by a
+   fresh group, and deduped on `event_id` (multi-consumer replay + idempotency).
+4. `uv sync` (exit 0) and `pnpm install` (exit 0, native builds approved) both
+   succeed; `uv run pytest` reports 9 passed / 6 skipped, and 6/6 with the
+   integration stack running.
+5. The commit-msg hook strips every attribution form while keeping real content;
+   no commit in the history carries attribution.
 
 ## Checkpoint commits
 
@@ -44,7 +51,7 @@ config validation passes for the base stack.
 | C0.5 | `feat: add proto contracts and python workspace with health stubs` | `proto/`, `pyproject.toml`, `libs/`, 19 service `/healthz` stubs | done |
 | C0.6 | `feat: scaffold next.js dashboard and pnpm workspace` | `web/`, `package.json`, `pnpm-workspace.yaml` | done |
 | C0.7 | `chore: add scripts and test scaffolding` | `scripts/`, `tests/` | done |
-| C0.8 | (verification) bring stack up, prove healthz + Kafka round-trip | — | held for review |
+| C0.8 | (verification) bring stack up, prove healthz + Kafka round-trip | — | done — all DoD items pass |
 
 ## Infrastructure stack (docker-compose)
 
