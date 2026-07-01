@@ -35,6 +35,9 @@ async def create_worker(client: Client) -> Worker:
 
 
 async def main() -> None:
+    from autograde_core.telemetry import configure_telemetry
+
+    configure_telemetry("orchestrator")
     client = await Client.connect(get_settings().temporal_address)
     worker = await create_worker(client)
     log.info("temporal_worker_started", task_queue=TASK_QUEUE)

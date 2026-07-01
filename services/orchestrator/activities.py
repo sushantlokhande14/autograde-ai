@@ -49,15 +49,35 @@ async def list_gradable_artifacts(submission_id: str) -> list[dict]:
 async def grade_theory(artifact: dict) -> dict:
     import asyncio
 
+    from opentelemetry import trace
+
     from services.graders.theory.grader import grade as _grade
 
-    return await asyncio.to_thread(_grade, artifact)
+    tracer = trace.get_tracer("autograde.orchestrator")
+    with tracer.start_as_current_span(
+        "grade_theory",
+        attributes={
+            "autograde.artifact_id": artifact["artifact_id"],
+            "autograde.question_id": artifact["question_id"],
+        },
+    ):
+        return await asyncio.to_thread(_grade, artifact)
 
 
 @activity.defn
 async def grade_code(artifact: dict) -> dict:
     import asyncio
 
+    from opentelemetry import trace
+
     from services.graders.code_execution.grader import grade as _grade
 
-    return await asyncio.to_thread(_grade, artifact)
+    tracer = trace.get_tracer("autograde.orchestrator")
+    with tracer.start_as_current_span(
+        "grade_code",
+        attributes={
+            "autograde.artifact_id": artifact["artifact_id"],
+            "autograde.question_id": artifact["question_id"],
+        },
+    ):
+        return await asyncio.to_thread(_grade, artifact)
