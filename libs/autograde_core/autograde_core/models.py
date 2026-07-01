@@ -93,6 +93,10 @@ class RubricQuestion(BaseModel):
     rubric_criteria: list[RubricCriterion] = Field(default_factory=list)
     grading_context: list[str] = Field(default_factory=list)
     test_cases: list[dict] = Field(default_factory=list)
+    # Code questions: prelude exec'd before the student module in the sandbox
+    # harness (helper functions the assignment provides).
+    harness_prelude: str = ""
+    style_criteria: list[str] = Field(default_factory=list)
 
 
 class Rubric(BaseModel):

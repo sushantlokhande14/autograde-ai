@@ -56,6 +56,18 @@ RUBRIC = {
             "weight": 20,
             "prompt": "Implement a CPS transformation for the given arithmetic AST.",
             "style_criteria": ["idiomatic Python", "handles edge cases"],
+            # Executable spec for the sandboxed CodeExecutionGrader. The
+            # prelude provides helpers student code may reference; each case
+            # is an expression evaluated in the student module's namespace.
+            "harness_prelude": (
+                "def apply(op, a, b):\n"
+                "    return {'+': a + b, '*': a * b, '-': a - b}[op]"
+            ),
+            "test_cases": [
+                {"id": "t1", "weight": 0.2, "expr": "cps(5, lambda v: v)", "expected": 5},
+                {"id": "t2", "weight": 0.4, "expr": "cps(('+', 2, 3), lambda v: v)", "expected": 5},
+                {"id": "t3", "weight": 0.4, "expr": "cps(('*', ('+', 1, 2), 4), lambda v: v)", "expected": 12},
+            ],
         },
         {
             "question_id": "q3",
