@@ -1,0 +1,18 @@
+# Keep build contexts lean and secrets out of images.
+.git/
+.githooks/
+data/
+web/node_modules/
+web/.next/
+**/__pycache__/
+**/*.pyc
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+node_modules/
+.env
+.env.*
+docs/
+tests/
+*.md

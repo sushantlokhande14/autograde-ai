@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+// Parsers normalize one source file into one or more canonical artifacts.
+// Each parser (pdf, notebook, code, image, fallback) implements this contract.
+package autograde.v1;
+
+service ParserService {
+  rpc Parse(ParseRequest) returns (ParseResponse);
+}
+
+message ParseRequest {
+  string submission_id = 1;
+  string source_file = 2;          // MinIO key of the raw file
+  string artifact_type_hint = 3;   // Router's guess: "theory" | "code" | "figure" | "derivation" | ""
+}
+
+message Artifact {
+  string artifact_id = 1;
+  string artifact_type = 2;        // canonical type after parsing
+  string content_ref = 3;          // MinIO key of the normalized content
+  string metadata_json = 4;        // parser-specific metadata (page count, cell types, ...)
+}
+
+message ParseResponse {
+  repeated Artifact artifacts = 1;
+  bool ok = 2;
+  string error = 3;                // populated when ok = false; file lands in fallback bucket
+}

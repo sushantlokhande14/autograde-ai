@@ -65,10 +65,14 @@ Runs as containers; application code runs locally via `uv` / `pnpm` in dev.
 Kafka topics are created by `infra/kafka/topics.sh` (run against Redpanda after
 it is healthy). Topic list matches PROJECT_PLAN §7.2.
 
-## Application services (uv workspace members)
+## Application services (modules under the root package)
 
-Each is a minimal FastAPI app exposing `GET /healthz` in Phase 0. gRPC servers
-replace/augment these starting Phase 1. `/healthz` ports:
+The three shared libs are the `uv` workspace members; the services live under
+the root `autograde-ai` package as the `services.*` namespace, so they share one
+resolved environment. Each service is a minimal FastAPI app exposing
+`GET /healthz` in Phase 0. gRPC servers replace/augment these starting Phase 1.
+Run one with `uv run uvicorn services.<path>.main:app --port <port>`. `/healthz`
+ports:
 
 | Service | Path | Port |
 |---|---|---|

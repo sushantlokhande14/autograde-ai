@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+// Router groups a submission's files by student and classifies them by type.
+// Deterministic; no LLM. See PROJECT_PLAN §8 (Parsing pool).
+package autograde.v1;
+
+service RouterService {
+  // Walk an uploaded zip's file list, group by student, classify by file type.
+  rpc RouteSubmission(RouteRequest) returns (RouteResponse);
+}
+
+message FileEntry {
+  string path = 1;       // path within the uploaded archive
+  int64 size = 2;
+  string sha256 = 3;     // content hash for dedup / idempotency
+}
+
+message RouteRequest {
+  string assignment_id = 1;
+  string zip_ref = 2;    // MinIO key of the raw upload
+  repeated FileEntry files = 3;
+}
+
+message StudentGroup {
+  string student_hash = 1;          // HMAC(assignment_id, canvas_id, secret)
+  repeated FileEntry files = 2;
+}
+
+message RouteResponse {
+  repeated StudentGroup groups = 1;
+  repeated FileEntry unrouted = 2;  // files that could not be attributed to a student
+}

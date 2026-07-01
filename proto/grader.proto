@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+// Every grading agent implements GraderService. The orchestrator dispatches
+// artifacts to graders as Temporal activities and collects scored results.
+package autograde.v1;
+
+service GraderService {
+  rpc Grade(GradeRequest) returns (GradeResponse);
+}
+
+message GradeRequest {
+  string submission_id = 1;
+  string question_id = 2;
+  string artifact_ref = 3;                 // MinIO key of the normalized artifact
+  string rubric_json = 4;                   // the question's rubric slice
+  repeated string retrieval_context_refs = 5;  // grounding chunks from Qdrant/MinIO
+}
+
+message CriterionScore {
+  string criterion = 1;
+  double awarded = 2;
+  double max = 3;
+}
+
+message GradeResponse {
+  double score = 1;
+  double max_score = 2;
+  double confidence = 3;                    // calibrated; drives the review gate
+  string reasoning = 4;
+  repeated CriterionScore breakdown = 5;
+  repeated string retrieval_citations = 6;  // which chunks were actually used
+  string llm_call_id = 7;                   // audit link into grading.llm_calls
+}
