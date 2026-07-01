@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+// Retrieval service: grounded context for graders. Given a rubric question and
+// artifact type, return the top course-material chunks with scores so graders
+// can cite exactly what grounded a grade (grading.grades.retrieval_citations).
+package autograde.v1;
+
+service RetrievalService {
+  rpc Retrieve(RetrieveRequest) returns (RetrieveResponse);
+}
+
+message RetrieveRequest {
+  string assignment_id = 1;      // human key, e.g. "cs152-hw3"
+  string question_id = 2;
+  string artifact_type = 3;      // "theory" | "code" | "derivation" | "figure"
+  int32 top_k = 4;               // default 3
+  string query_hint = 5;         // optional artifact excerpt to sharpen the query
+  // Reference-answer chunks are excluded unless explicitly requested
+  // (eval tooling and CrossChecker only — never grader prompts).
+  bool include_reference = 6;
+}
+
+message Chunk {
+  string chunk_id = 1;
+  string source = 2;             // originating document
+  string text = 3;
+  double score = 4;              // cosine similarity
+  bool reference_answer = 5;
+}
+
+message RetrieveResponse {
+  repeated Chunk chunks = 1;
+  bool cache_hit = 2;
+  int32 latency_ms = 3;
+}
