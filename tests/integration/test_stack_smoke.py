@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 CORE_PORTS = {
-    "postgres": 5432,
+    "postgres": 5433,
     "redis": 6379,
     "kafka": 9092,
     "minio": 9000,
