@@ -97,17 +97,19 @@ graph LR
 
 ## Sandbox design (Windows dev reality)
 
-gVisor and Firecracker need Linux/KVM; on this machine the sandbox is plain
-Docker with hard limits — documented as the dev-tier sandbox, with gVisor
-(dev-Linux) and Firecracker (prod) as the target ladder per PROJECT_PLAN §6.
+Resolved decision: **gVisor runsc inside WSL2 Ubuntu**, which runs its own
+Docker engine with `runsc` registered as a runtime. The Windows-side pool
+invokes it via a configurable command prefix, so the same code runs
+`docker --runtime=runsc` natively on Linux. Firecracker remains the prod
+target per PROJECT_PLAN §6.
 
 Per run: `python:3.11-slim`-based image (pre-pulled, no registry access at
-grade time), `--network none`, `--memory 256m --cpus 1 --pids-limit 64`,
-`--read-only` rootfs + tmpfs `/tmp`, non-root user, wall-clock timeout
-(default 10s/test) enforced from outside via container kill, student dir
-mounted read-only. Harness inside the container reads test-case JSON from
-stdin-mounted file, imports the student module, runs cases, writes results
-JSON — the host never `exec`s student code directly.
+grade time), `--runtime=runsc`, `--network none`, `--memory 256m --cpus 1
+--pids-limit 64`, `--read-only` rootfs + tmpfs `/tmp`, non-root user,
+wall-clock timeout (default 10s/test) enforced from outside via container
+kill, student dir mounted read-only. Harness inside the container reads
+test-case JSON, imports the student module, runs cases, writes results JSON —
+the host never `exec`s student code directly.
 
 ## Data & storage touched
 
@@ -133,20 +135,20 @@ JSON — the host never `exec`s student code directly.
 | P3.7 | `feat: kafka workflow starter` | question.mapped consumer, fully-mapped detection, idempotent workflow starts |
 | P3.8 | `test: single-student e2e with grafana trace` | DoD scenario asserted (grades, audit links, containment, trace in Tempo); docs close-out |
 
-## Open decisions for this phase
+## Decisions for this phase
 
-1. **Grader model (CPU inference, 23GB RAM).** Options: **(a) `qwen2.5:3b`
-   for both graders** — already installed, ~fast enough for Phase 4's batch
-   target, weakest rubric judgment; **(b) pull `qwen2.5:7b-instruct`
-   (~4.7GB)** for TheoryGrader (better judgment, ~2-3× slower per call, fine
-   for Phase 3's single student but a risk for Phase 4's 30-minute batch
-   target on CPU); or **(c) 7b theory + 3b code-interpretation.** Models stay
-   per-grader configurable (`LOCAL_MODEL_THEORY` / `LOCAL_MODEL_CODE`) either
-   way; this decision sets the defaults we measure in Phase 6.
-2. **Sandbox tier acknowledgment.** Plain-Docker hard limits as described
-   above for Windows dev, gVisor documented as the Linux target. Alternative:
-   run sandboxes inside WSL2 with gVisor runsc — closer to the plan's target
-   but adds a WSL bridge to every grade and couples the dev loop to WSL state.
+1. **Grader model — RESOLVED: `qwen2.5:3b` for both graders.** Fast enough on
+   CPU to keep Phase 4's batch target realistic; the quality gap is exactly
+   what confidence gating exists for, and it gets measured honestly in
+   Phase 6. Per-grader overrides stay in `LOCAL_MODEL_THEORY` /
+   `LOCAL_MODEL_CODE`.
+2. **Sandbox tier — RESOLVED: WSL2 + gVisor runsc.** Untrusted code runs under
+   gVisor's syscall interception inside the Ubuntu WSL2 distro, which gets its
+   own Docker engine (Docker Desktop's managed VM does not accept custom
+   runtimes cleanly). The sandbox runner shells out through a configurable
+   command prefix (`wsl -d Ubuntu -- docker …` here; plain `docker …` on
+   Linux), so the code is host-portable. Docker-with-hard-limits remains the
+   documented fallback tier if gVisor-in-WSL2 proves unstable.
 
 ## How to verify (once built)
 
