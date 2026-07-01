@@ -1,6 +1,13 @@
 # Phase 1 — Ingestion & Parsing
 
-**Status:** plan for review (no code yet).
+**Status:** complete — all DoD items verified live (2026-07-01). Results:
+80/80 files ingested Kafka-driven end to end; **100% artifact-type accuracy**
+(target ≥95%); **0% fallback** (target <3%); 100% auto-mapping accuracy with
+all 80 above the 0.6 gate (histogram: all ≥0.9); e2e re-run idempotent (71s,
+4/4 tests); 30 unit/eval tests green. Note: the synthetic set produced no
+live sub-gate mappings, so the review queue was verified via the API
+(/mappings/pending, confirm flow) and gating unit tests rather than live
+gated data — worth revisiting with harder ambiguity in Phase 6's eval set.
 **Branch:** `phase-1-ingestion`.
 **Prerequisite:** Phase 0 complete and verified; plus this phase provisions a
 local **Ollama** server with `qwen2.5:3b-instruct` and the **Tesseract** OCR
