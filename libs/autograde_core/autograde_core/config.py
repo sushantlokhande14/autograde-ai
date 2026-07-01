@@ -52,8 +52,10 @@ class Settings(BaseSettings):
     # LLM
     llm_backend: str = Field(default="local", alias="LLM_BACKEND")
     ollama_url: str = Field(default="http://localhost:11434", alias="OLLAMA_URL")
-    local_model_theory: str = Field(default="qwen2.5:32b-instruct", alias="LOCAL_MODEL_THEORY")
-    local_model_code: str = Field(default="qwen2.5-coder:32b", alias="LOCAL_MODEL_CODE")
+    # Phase 3 resolved decision: 3b defaults for CPU inference; the plan's 32B
+    # targets are the scale-up path once hardware allows.
+    local_model_theory: str = Field(default="qwen2.5:3b", alias="LOCAL_MODEL_THEORY")
+    local_model_code: str = Field(default="qwen2.5:3b", alias="LOCAL_MODEL_CODE")
     # Small model for the QuestionMapper classification call (Phase 1).
     local_model_map: str = Field(default="qwen2.5:3b", alias="LOCAL_MODEL_MAP")
 

@@ -32,7 +32,17 @@ def upsert_assignment(
         rubric=rubric,
         grading_config=grading_config,
     )
-    session.execute(stmt.on_conflict_do_nothing(index_elements=["id"]))
+    # Rubrics evolve; re-loading an assignment must update it in place.
+    session.execute(
+        stmt.on_conflict_do_update(
+            index_elements=["id"],
+            set_={
+                "title": stmt.excluded.title,
+                "rubric": stmt.excluded.rubric,
+                "grading_config": stmt.excluded.grading_config,
+            },
+        )
+    )
 
 
 def upsert_submission(
