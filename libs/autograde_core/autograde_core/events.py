@@ -50,12 +50,24 @@ def get_consumer(group: str, topics: list[str], from_beginning: bool = True) -> 
     return consumer
 
 
-def consume(consumer: Consumer, timeout: float = 1.0) -> Iterator[dict[str, Any]]:
-    """Yield decoded JSON payloads until interrupted. Skips messages on error."""
+def consume(
+    consumer: Consumer, timeout: float = 1.0, idle_timeout: float | None = None
+) -> Iterator[dict[str, Any]]:
+    """Yield decoded JSON payloads until interrupted. Skips messages on error.
+
+    With ``idle_timeout`` set, returns after that many seconds without a
+    message (useful for batch drains and tests).
+    """
+    import time
+
+    last = time.monotonic()
     while True:
         msg: Message | None = consumer.poll(timeout)
         if msg is None:
+            if idle_timeout is not None and time.monotonic() - last > idle_timeout:
+                return
             continue
         if msg.error():
             continue
+        last = time.monotonic()
         yield json.loads(msg.value())
