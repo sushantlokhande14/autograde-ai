@@ -1,0 +1,35 @@
+# Autograde AI — dev overlay.
+#
+# Optional: containerize the API gateway instead of running it via `uv`.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d api
+#
+# The base stack (docker-compose.yml) is infra only; in normal dev you run the
+# Python services locally with `uv run ...` for fast reload. This overlay exists
+# so the API can also be exercised in-container when needed.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    container_name: autograde-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      KAFKA_BROKERS: redpanda:29092
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      QDRANT_URL: http://qdrant:6333
+      TEMPORAL_ADDRESS: temporal:7233
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
