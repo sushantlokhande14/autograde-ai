@@ -1,2 +1,9 @@
 packages:
   - web
+
+# Allow these native packages to run install scripts (pnpm 11 blocks them by
+# default). sharp is Next.js's image library; unrs-resolver backs eslint import
+# resolution.
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
