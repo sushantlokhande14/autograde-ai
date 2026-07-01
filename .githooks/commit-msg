@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# .githooks/commit-msg
+# Removes any AI attribution from commit messages before they land.
+# This is a hard project rule: no Co-authored-by / "Generated with" / robot
+# marks from any AI tool are permitted on any commit, ever. The hook is the
+# backstop; the expectation is that no such line is authored in the first place.
+
+set -euo pipefail
+
+msg_file="$1"
+tmp="$(mktemp)"
+
+grep -viE '^(co-authored-by:[[:space:]]*(claude|anthropic|chatgpt|openai|gpt|copilot|cursor|codeium|gemini))' "$msg_file" \
+  | grep -viE '(generated[[:space:]]+with[[:space:]].*(claude|anthropic|chatgpt|openai|gpt|copilot|cursor))' \
+  | grep -viE '(🤖[[:space:]]*generated)' \
+  > "$tmp"
+
+mv "$tmp" "$msg_file"

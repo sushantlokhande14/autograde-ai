@@ -1,0 +1,50 @@
+# Env
+.env
+.env.local
+.env.*.local
+
+# Local data (NEVER commit)
+data/
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+uv.lock
+
+# Generated protobuf stubs
+**/*_pb2.py
+**/*_pb2.pyi
+**/*_pb2_grpc.py
+
+# Node
+node_modules/
+.next/
+.turbo/
+pnpm-lock.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Docker
+docker-compose.override.yml
+
+# Model weights (huge, local only)
+data/models/
+*.gguf
+*.safetensors
