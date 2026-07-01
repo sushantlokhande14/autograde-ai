@@ -2,9 +2,12 @@
 
 **Status:** plan for review (no code yet).
 **Branch:** `phase-2-rubric-rag`.
-**Prerequisite:** Phase 1 complete (`phase-1-complete` tag); Docker stack +
-Ollama running.
-**Open decisions:** two, listed at the end — please resolve on review.
+**Prerequisite:** Phase 1 complete (`phase-1-complete` tag); Docker stack
+running (Ollama not needed for retrieval — embeddings are in-process).
+**Decisions:** resolved on review — embeddings via **sentence-transformers
+`all-MiniLM-L6-v2` (384-dim, in-process)**; reference answers **indexed
+flagged and excluded from grader-facing retrieval by default**. See
+[Decisions for this phase](#decisions-for-this-phase).
 
 ---
 
@@ -77,15 +80,15 @@ excerpt); results carry `{chunk_id, source, text, score}` so graders can write
 |---|---|---|
 | **Rubric validator** | `autograde_core.rubric` | Strict pydantic validation over the §7.6 schema: unique question ids, weights > 0, criteria points sum consistency, known question types, test-case refs present for code questions. Loader: file → validated `Rubric` → `grading.assignments` upsert. Actionable error messages (field path + reason). |
 | **Chunker** | `libs/autograde_rag` (new lib) | Deterministic: split on headings/paragraphs, target ~350 words with 15% overlap; stable chunk ids = `uuid5(source, seq, sha256(text))` so re-indexing upserts instead of duplicating. |
-| **Embedder** | `autograde_rag.embed` | Ollama `/api/embed` with `nomic-embed-text` (768-dim). Batch calls. Model pulled as a phase prerequisite (~270MB). |
-| **Indexer** | `autograde_rag.index` + `scripts/index_materials.py` | Ensure collections (cosine, 768-dim), upsert chunk vectors with payloads `{source, question_ids, artifact_types, reference_answer, text}`. Creates `plagiarism_corpus` empty (populated Phase 4). |
+| **Embedder** | `autograde_rag.embed` | In-process `sentence-transformers` `all-MiniLM-L6-v2` (384-dim). Model auto-downloads (~90MB) to local cache on first use; loaded once per process. |
+| **Indexer** | `autograde_rag.index` + `scripts/index_materials.py` | Ensure collections (cosine, 384-dim), upsert chunk vectors with payloads `{source, question_ids, artifact_types, reference_answer, text}`. Creates `plagiarism_corpus` empty (populated Phase 4). |
 | **Retrieval service** | gRPC (`proto/retrieval.proto`) + in-process lib | `Retrieve(question_id, artifact_type, top_k, include_reference)` → embed query → Qdrant filtered search (payload filter on `question_ids`/`artifact_types` when present, `reference_answer=false` unless explicitly included) → cache result in Redis `retrieval:<sha256(q_id,artifact_type,top_k)>` TTL 1h. gRPC server wraps the same library the graders will import in-process. |
 | **Prompt cache** | `autograde_llm.cached` | `CachedLLMClient(inner)` wrapper: key `prompt:<sha256(model,system,cache_prefix,prompt)>`, TTL 24h, marks `cache_hit=True` on hits. Uses the `CompletionRequest.cache_prefix` field reserved in Phase 0. |
 | **Synthetic corpus** | `scripts/seed_course_materials.py` | ~8 markdown "lecture notes / textbook sections" covering the four cs152-hw3 topics (CPS, call-by-name/value, fixed points, runtime plotting) + 2 distractor docs (unrelated topics) + per-question reference answers flagged as such. Ground-truth map doc→question for the hit-rate test. |
 
 ## Data & storage touched
 
-- **Qdrant collections:** `course_materials`, `rubric_context` (768-dim cosine),
+- **Qdrant collections:** `course_materials`, `rubric_context` (384-dim cosine),
   `plagiarism_corpus` (created empty).
 - **Redis keyspaces (per §7.4):** `retrieval:*` TTL 1h, `prompt:*` TTL 24h.
 - **Postgres:** `grading.assignments` upsert via the validated loader (exists).
@@ -97,9 +100,9 @@ excerpt); results carry `{chunk_id, source, text, score}` so graders can write
 |---|---|
 | `qdrant-client` | Qdrant upsert/search |
 | `redis` | retrieval + prompt caches |
-| new Ollama model `nomic-embed-text` (~270MB) | embeddings, local-first |
+| `sentence-transformers` (pulls torch CPU) | in-process embeddings |
 
-Both Python packages go in the new `autograde_rag` workspace lib (redis also in
+Packages go in the new `autograde_rag` workspace lib (redis also in
 `autograde_llm` for the prompt cache).
 
 ## Checkpoint commits
@@ -115,24 +118,20 @@ Both Python packages go in the new `autograde_rag` workspace lib (redis also in
 | P2.7 | `feat: redis prompt cache on llm client` | `CachedLLMClient`, keying per §7.4; live hit test |
 | P2.8 | `test: retrieval correctness and latency benchmark` | hit-rate ≥90% top-3, <50ms cached / <200ms cold measured; docs close-out |
 
-## Open decisions for this phase
+## Decisions for this phase
 
-1. **Embedding model.** I recommend **Ollama `nomic-embed-text`** (768-dim,
-   ~270MB, local-first, no new Python heavyweight deps). Alternatives:
-   `sentence-transformers` in-process (pulls torch, ~2GB+ of deps, but no
-   Ollama dependency at query time) or hosted API embeddings (against the
-   local-first default). This choice sets the collection dimension, so it's
-   cheap now and annoying to change later.
-2. **Reference-answer handling.** I recommend **index them flagged and exclude
-   from grader-facing retrieval by default** (`include_reference=false`), so
-   the CrossChecker/eval tooling can still opt in. Alternative: don't index
-   reference answers at all (simpler, but Phase 6 eval tooling then re-parses
-   rubrics to compare against gold).
+1. **Embedding model — RESOLVED: `sentence-transformers` in-process** with
+   `all-MiniLM-L6-v2` (384-dim, cosine). Chosen over Ollama embeddings; the
+   trade accepted is the torch dependency in exchange for no Ollama dependency
+   on the retrieval path and lower per-query latency. Collections are 384-dim.
+2. **Reference-answer handling — RESOLVED: index flagged, exclude by default.**
+   Chunks carry `reference_answer: true` and grader-facing retrieval filters
+   them out unless `include_reference` is explicitly set (eval/CrossChecker).
 
 ## How to verify (once built)
 
 ```bash
-docker compose up -d && ollama pull nomic-embed-text
+docker compose up -d
 uv run python scripts/gen_proto.py
 uv run python scripts/seed_course_materials.py --out data/materials
 uv run python scripts/index_materials.py data/materials --assignment cs152-hw3
