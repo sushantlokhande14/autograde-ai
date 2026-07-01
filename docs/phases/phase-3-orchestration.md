@@ -1,6 +1,20 @@
 # Phase 3 — Orchestration + First Graders
 
-**Status:** plan for review (no code yet).
+**Status:** complete — all DoD items verified live (2026-07-01). Results:
+single-student e2e 4/4 in 41s through the Kafka starter → Temporal →
+both graders; grades persisted with reasoning/confidence/breakdown; theory
+grade cites retrieval chunks and links its llm_call with payloads in MinIO;
+code grade links its sandbox_run with logs in MinIO; **gVisor confirmed**
+("Starting gVisor..." in container dmesg on the WSL2 native engine) with a
+hostile infinite loop killed + flagged and a network attempt blocked; the
+orchestrator trace reached Tempo (Grafana-visible); 59 unit tests green.
+Field observations: the buggy synthetic CPS variant scores 12/20 (passes
+simple cases, fails nesting) and the wrong theory variant scores 0/10 —
+grader judgment is directionally right on 3b; calibration quality is
+Phase 6's measurement. Two fixes surfaced: model defaults now follow the 3b
+decision (Ollama 404s on unpulled models), and assignment upserts now update
+rubrics in place (do-nothing kept a stale rubric and starved the harness of
+test cases).
 **Branch:** `phase-3-orchestration`.
 **Prerequisite:** Phase 2 complete (`phase-2-complete` tag); Docker stack +
 Ollama running.
