@@ -7,5 +7,6 @@ graders come online.
 """
 
 from autograde_llm.client import Backend, CompletionRequest, CompletionResult, LLMClient
+from autograde_llm.ollama_backend import OllamaClient
 
-__all__ = ["Backend", "CompletionRequest", "CompletionResult", "LLMClient"]
+__all__ = ["Backend", "CompletionRequest", "CompletionResult", "LLMClient", "OllamaClient"]
