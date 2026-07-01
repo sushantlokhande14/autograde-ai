@@ -26,8 +26,12 @@ cleanup downstream.
 4. `uv sync` and `pnpm install` both succeed from a clean checkout.
 5. The commit-msg hook strips AI attribution (verified with a probe commit).
 
-Items 1–3 are **verification steps held for your review** — the scaffold is in
-place but I have not run `docker compose up` yet, per the agreed kickoff mode.
+Item 5 (hook) is **verified**: exercising `.githooks/commit-msg` on a sample
+message strips every attribution form while keeping real content, and no commit
+in the history carries attribution. Items 1–4 are **held for your review** — the
+scaffold is in place but the Docker stack has not been brought up and `uv`/`pnpm`
+installs have not been run yet, per the agreed kickoff mode. `docker compose`
+config validation passes for the base stack.
 
 ## Checkpoint commits
 
@@ -36,10 +40,10 @@ place but I have not run `docker compose up` yet, per the agreed kickoff mode.
 | C0.1 | `chore: initialize repo ...` | git init, MIT license, .gitignore, commit-msg hook | done |
 | C0.2 | `chore: enforce LF line endings ...` | `.gitattributes` | done |
 | C0.3 | `docs: add plan, architecture, phase-0 plan` | `PROJECT_PLAN.md`, `docs/` | done |
-| C0.4 | `infra: add docker-compose stack + configs` | compose files, `.env.example`, `infra/` | pending |
-| C0.5 | `feat: add proto contracts + uv python workspace` | `proto/`, `pyproject.toml`, `libs/`, service `/healthz` stubs | pending |
-| C0.6 | `feat: scaffold next.js dashboard + pnpm workspace` | `web/`, `package.json`, `pnpm-workspace.yaml` | pending |
-| C0.7 | `chore: add scripts and test scaffolding` | `scripts/`, `tests/` | pending |
+| C0.4 | `infra: add docker-compose stack and service configs` | compose files, `.env.example`, `infra/` | done |
+| C0.5 | `feat: add proto contracts and python workspace with health stubs` | `proto/`, `pyproject.toml`, `libs/`, 19 service `/healthz` stubs | done |
+| C0.6 | `feat: scaffold next.js dashboard and pnpm workspace` | `web/`, `package.json`, `pnpm-workspace.yaml` | done |
+| C0.7 | `chore: add scripts and test scaffolding` | `scripts/`, `tests/` | done |
 | C0.8 | (verification) bring stack up, prove healthz + Kafka round-trip | — | held for review |
 
 ## Infrastructure stack (docker-compose)
