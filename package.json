@@ -1,0 +1,12 @@
+{
+  "name": "autograde-ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Autograde AI — multi-agent grading platform (Node workspace root).",
+  "packageManager": "pnpm@11.6.0",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint"
+  }
+}
