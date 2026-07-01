@@ -2,9 +2,12 @@
 
 **Status:** plan for review (no code yet).
 **Branch:** `phase-1-ingestion`.
-**Prerequisite:** Phase 0 complete and verified.
-**Depends on decisions:** see [Open decisions for this phase](#open-decisions-for-this-phase)
-— a few materially shape the build; please resolve them on review before I start.
+**Prerequisite:** Phase 0 complete and verified; plus this phase provisions a
+local **Ollama** server with `qwen2.5:3b-instruct` and the **Tesseract** OCR
+binary (see resolved decisions).
+**Decisions:** resolved on review — QuestionMapper calls a local Ollama model
+now; ImageParser does real Tesseract OCR now. See
+[Decisions for this phase](#decisions-for-this-phase).
 
 ---
 
@@ -108,9 +111,9 @@ counts against the <3% parse-failure target.
 | **PDFParser** | gRPC | PyMuPDF text extraction → `theory`/`derivation`; pages that are image-only are emitted as `figure` with the image ref. |
 | **NotebookParser** | gRPC | `nbformat` splits cells: markdown → `theory`, code → `code`, image outputs → `figure`. |
 | **CodeParser** | gRPC | Tree-sitter parse (Python first); extract `imports`, `functions`, `entry_points` into `CodeContent`. |
-| **ImageParser** | gRPC | Store the image ref; lightweight OCR for text-in-image (see Tesseract decision). Diagram/plot understanding via vision model is deferred to Phase 3. |
+| **ImageParser** | gRPC | Store the image ref and run **Tesseract OCR** (`pytesseract`) for text-in-image → `ocr_text`. Diagram/plot semantic understanding via a vision model is deferred to Phase 3. |
 | **FallbackParser** | gRPC | `.txt`, `.md`, `.docx` (python-docx) → `theory`; anything unrecognized → `unknown`. |
-| **QuestionMapper** | gRPC + Kafka consumer (`artifact.parsed`) | Best-guess `question_id` + confidence per artifact; gate at 0.6. **Heuristic in Phase 1** (filename cues + keyword/overlap against rubric question prompts); LLM/RAG-assisted upgrade in Phase 2–3. |
+| **QuestionMapper** | gRPC + Kafka consumer (`artifact.parsed`) | Best-guess `question_id` + confidence per artifact; gate at 0.6. **LLM-assisted via local Ollama** (`qwen2.5:3b-instruct`): a constrained classification prompt over artifact text + rubric question prompts returns a `question_id` and confidence, with a deterministic filename-cue fallback. RAG grounding layers in at Phase 2. |
 | **Ingestion worker** | Kafka consumer | Consumes `artifact.registered`, dispatches to the right parser gRPC by type, persists results, emits `artifact.parsed`. Becomes Temporal activities in Phase 3. |
 
 ## Data & storage touched
@@ -132,7 +135,8 @@ counts against the <3% parse-failure target.
 | `pymupdf` | PDFParser | Pure-wheel on Windows |
 | `nbformat` | NotebookParser | — |
 | `tree-sitter`, `tree-sitter-python` | CodeParser | Python grammar only in Phase 1 |
-| `pytesseract`, `Pillow` | ImageParser OCR | **Requires the Tesseract system binary** — see decisions |
+| `pytesseract`, `Pillow` | ImageParser OCR | Tesseract system binary installed this phase (UB-Mannheim Windows build) |
+| `ollama` (python client) | QuestionMapper LLM call | talks to local Ollama; `qwen2.5:3b-instruct` (~2GB) pulled this phase; a minimal `autograde_llm` Ollama backend is implemented |
 | `python-docx` | FallbackParser | `.docx` |
 | `minio` | object storage client | S3 API |
 | `matplotlib`, `reportlab` | synthetic data generator only | Produce plots + PDFs for the test zip |
@@ -160,30 +164,22 @@ naming so Router grouping is exercised realistically.
 | P1.3 | `feat: db models and alembic baseline` | `autograde_db` ORM for submissions/artifacts + identity; Alembic baseline |
 | P1.4 | `feat: router service` | grouping, HMAC hashing, identity + submissions writes, `artifact.registered` |
 | P1.5 | `feat: pdf, notebook, and code parsers` | three gRPC parsers + unit tests |
-| P1.6 | `feat: image and fallback parsers` | two gRPC parsers + unit tests |
-| P1.7 | `feat: question mapper with confidence gate` | heuristic mapper, 0.6 gate, `question.mapped` / AwaitingMapping |
+| P1.6 | `feat: image (tesseract ocr) and fallback parsers` | two gRPC parsers + unit tests |
+| P1.7 | `feat: ollama llm backend and question mapper` | minimal `autograde_llm` Ollama backend, LLM mapping call + filename fallback, 0.6 gate, `question.mapped` / AwaitingMapping |
 | P1.8 | `feat: ingestion worker wiring end to end` | Kafka-driven dispatch across the parser pool |
 | P1.9 | `feat: synthetic submissions generator` | real `seed_synthetic_data.py` (25 submissions) |
 | P1.10 | `feat: low-confidence mapping review skeleton` | dashboard list + confirm stub |
 | P1.11 | `test: end-to-end ingestion + artifact-type and confidence report` | e2e test on 25 submissions; metrics emitted |
 
-## Open decisions for this phase
+## Decisions for this phase
 
-Please resolve on review — each changes what I build:
-
-1. **QuestionMapper = heuristic in Phase 1?** PROJECT_PLAN §8 calls it
-   "LLM-assisted," but the LLM client doesn't exist until Phase 3 and RAG until
-   Phase 2. I propose a deterministic heuristic (filename cues + keyword overlap
-   with rubric prompts) that establishes the interface + 0.6 gate now, with the
-   LLM/RAG upgrade layered in Phase 2–3. **Recommended.** Alternative: pull a
-   minimal Ollama call forward (blocks on model/hardware, an unresolved global
-   open-decision).
-2. **ImageParser OCR — install Tesseract now, or defer?** Full OCR needs the
-   Tesseract system binary (separate Windows install), and diagram/plot
-   understanding needs the vision model (Phase 3). I propose Phase 1 stores the
-   image + any trivially embedded text and marks richer extraction as deferred,
-   so ingestion stays local-model-free. Alternative: install Tesseract and do
-   real OCR now.
+1. **QuestionMapper mapping — RESOLVED: LLM now, local Ollama.** Implemented as a
+   real Ollama call (`qwen2.5:3b-instruct`) that classifies each artifact against
+   the rubric's question prompts and returns a confidence, with a deterministic
+   filename-cue fallback and the 0.6 gate. This pulls a minimal `autograde_llm`
+   Ollama backend forward from Phase 3. RAG grounding still arrives in Phase 2.
+2. **ImageParser OCR — RESOLVED: install Tesseract now.** Real `pytesseract` OCR
+   in Phase 1; the Tesseract system binary is provisioned as a prerequisite.
 3. **Schema ownership: `init.sql` vs Alembic.** `init.sql` seeds the container
    on first boot. I propose it stays the Phase 0 baseline and Alembic takes over
    forward evolution from Phase 1 (initial migration = stamp of baseline).
