@@ -23,6 +23,11 @@ def student_hash(assignment_id: str, canvas_id: str, secret: str | None = None) 
     return hmac.new(key, f"{assignment_id}:{canvas_id}".encode(), hashlib.sha256).hexdigest()
 
 
+def assignment_id_for(assignment_key: str) -> UUID:
+    """Stable assignment UUID from the human assignment key (e.g. "cs152-hw3")."""
+    return uuid5(_ID_NAMESPACE, f"assignment:{assignment_key}")
+
+
 def submission_id_for(assignment_id: str, student_hash_value: str) -> UUID:
     """Stable submission id from assignment + student hash."""
     return uuid5(_ID_NAMESPACE, f"submission:{assignment_id}:{student_hash_value}")
