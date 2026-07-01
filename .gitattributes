@@ -1,0 +1,29 @@
+# Normalize all text to LF in the repo. Windows checkouts keep LF so that
+# shell scripts, git hooks, and config files mounted into Linux containers
+# do not break on carriage returns.
+* text=auto eol=lf
+
+# Explicitly LF: anything executed by a POSIX shell or a Linux container.
+*.sh        text eol=lf
+*.py        text eol=lf
+*.proto     text eol=lf
+*.sql       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.json      text eol=lf
+*.toml      text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.mjs       text eol=lf
+.githooks/* text eol=lf
+Dockerfile  text eol=lf
+
+# Binary assets: never touch.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.pdf   binary
+*.gguf  binary
+*.safetensors binary
