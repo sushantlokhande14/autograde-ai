@@ -1,6 +1,13 @@
 # Phase 2 — Rubric & RAG Layer
 
-**Status:** plan for review (no code yet).
+**Status:** complete — all DoD items verified live (2026-07-01). Results:
+rubric validator 9/9 tests with field-path errors; 23 corpus chunks +
+4 flagged reference chunks indexed idempotently; **100% top-3 hit rate** (4/4
+questions, target ≥90%); reference answers never appear in default retrieval
+and do appear on opt-in; prompt cache hit/miss/TTL proven; latency over 40
+calls **cold p50=16ms / p95=32ms** (target <200ms) and **cached p50≈0ms /
+p95=0ms** (target <50ms); gRPC path exercised live; 48 unit tests + 6
+integration tests green.
 **Branch:** `phase-2-rubric-rag`.
 **Prerequisite:** Phase 1 complete (`phase-1-complete` tag); Docker stack
 running (Ollama not needed for retrieval — embeddings are in-process).
