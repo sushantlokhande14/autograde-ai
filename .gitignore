@@ -51,3 +51,7 @@ data/models/
 
 # Internal planning docs (kept local, not published)
 the design spec
+
+# Generated gold-set content (regenerate via scripts/generate_eval_set.py)
+tests/eval/gold_set/*
+!tests/eval/gold_set/.gitkeep
