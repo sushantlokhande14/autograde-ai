@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Autograde AI — create Kafka topics on the dev Redpanda broker.
 # Idempotent: re-running is a no-op for topics that already exist.
-# Topic list and partition counts match PROJECT_PLAN §7.2 (dev scale).
+# Topic list and partition counts match design spec §7.2 (dev scale).
 set -euo pipefail
 
 BROKER="${KAFKA_BROKERS:-localhost:9092}"

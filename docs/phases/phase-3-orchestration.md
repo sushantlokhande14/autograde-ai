@@ -34,7 +34,7 @@ trace visible in Grafana. The plan calls Temporal the "new tech with the
 highest payoff" and budgets an onboarding sub-phase inside this one — P3.1 is
 exactly that.
 
-## What "done" looks like (Definition of Done, per PROJECT_PLAN §9)
+## What "done" looks like (Definition of Done, per design spec §9)
 
 For a synthetic single-student submission with a theory and a code question:
 
@@ -115,7 +115,7 @@ Resolved decision: **gVisor runsc inside WSL2 Ubuntu**, which runs its own
 Docker engine with `runsc` registered as a runtime. The Windows-side pool
 invokes it via a configurable command prefix, so the same code runs
 `docker --runtime=runsc` natively on Linux. Firecracker remains the prod
-target per PROJECT_PLAN §6.
+target per design spec §6.
 
 Per run: `python:3.11-slim`-based image (pre-pulled, no registry access at
 grade time), `--runtime=runsc`, `--network none`, `--memory 256m --cpus 1

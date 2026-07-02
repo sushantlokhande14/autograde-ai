@@ -1,6 +1,6 @@
 """Redis prompt cache wrapping any LLMClient.
 
-Key per PROJECT_PLAN §7.4: ``prompt:<sha256(model, system, rubric_prefix,
+Key per design spec §7.4: ``prompt:<sha256(model, system, rubric_prefix,
 prompt)>`` with a 24h TTL. Hits return the stored completion with
 ``cache_hit=True`` and near-zero latency — the mechanism behind the "95%+
 prefix cache hit on shared rubric context" resume claim, measured for real in

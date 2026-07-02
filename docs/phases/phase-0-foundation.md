@@ -46,7 +46,7 @@ Desktop, engine 27.3.1):
 |---|---|---|---|
 | C0.1 | `chore: initialize repo ...` | git init, MIT license, .gitignore, commit-msg hook | done |
 | C0.2 | `chore: enforce LF line endings ...` | `.gitattributes` | done |
-| C0.3 | `docs: add plan, architecture, phase-0 plan` | `PROJECT_PLAN.md`, `docs/` | done |
+| C0.3 | `docs: add plan, architecture, phase-0 plan` | design docs | done |
 | C0.4 | `infra: add docker-compose stack and service configs` | compose files, `.env.example`, `infra/` | done |
 | C0.5 | `feat: add proto contracts and python workspace with health stubs` | `proto/`, `pyproject.toml`, `libs/`, 19 service `/healthz` stubs | done |
 | C0.6 | `feat: scaffold next.js dashboard and pnpm workspace` | `web/`, `package.json`, `pnpm-workspace.yaml` | done |
@@ -74,7 +74,7 @@ Runs as containers; application code runs locally via `uv` / `pnpm` in dev.
 | Tempo | `grafana/tempo` | 3200 | traces |
 
 Kafka topics are created by `infra/kafka/topics.sh` (run against Redpanda after
-it is healthy). Topic list matches PROJECT_PLAN §7.2.
+it is healthy). Topic list matches design spec §7.2.
 
 ## Application services (modules under the root package)
 

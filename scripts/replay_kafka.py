@@ -2,7 +2,7 @@
 
 Proves the Phase 0 Definition of Done item: publish an event to Kafka, have a
 no-op consumer read and log it, then demonstrate two properties the design
-depends on (PROJECT_PLAN §5, §6):
+depends on (design spec §5, §6):
 
   * multi-consumer replay  — a fresh consumer group re-reads the same event
     from the beginning (this is why Kafka is here and Celery is not);

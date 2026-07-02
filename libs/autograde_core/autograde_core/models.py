@@ -3,7 +3,7 @@
 The `Artifact` is the unit every grader downstream reasons about: a normalized,
 type-tagged piece of a student's submission with a best-guess question mapping.
 Its JSON body is stored in MinIO (`normalized-artifacts/`) and referenced from
-`grading.artifacts`. Rubric models mirror PROJECT_PLAN §7.6.
+`grading.artifacts`. Rubric models mirror design spec §7.6.
 """
 
 from __future__ import annotations
@@ -76,7 +76,7 @@ class Artifact(BaseModel):
     metadata: dict = Field(default_factory=dict)
 
 
-# --- Rubric (PROJECT_PLAN §7.6) ---------------------------------------------
+# --- Rubric (design spec §7.6) ---------------------------------------------
 
 
 class RubricCriterion(BaseModel):

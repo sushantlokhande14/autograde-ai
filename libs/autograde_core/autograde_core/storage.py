@@ -2,7 +2,7 @@
 
 Thin wrapper over the MinIO client that applies the bucket prefix, ensures the
 pipeline's buckets exist, and offers JSON/bytes get/put. Buckets are immutable
-after write (PROJECT_PLAN §7.3); we never overwrite silently in higher layers.
+after write (design spec §7.3); we never overwrite silently in higher layers.
 """
 
 from __future__ import annotations

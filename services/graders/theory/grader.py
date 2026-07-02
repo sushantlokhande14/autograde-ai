@@ -5,7 +5,7 @@ excluded) → prompt with a stable rubric prefix (prompt-cache keyed) and the
 student answer delimited strictly as data → local LLM → strict-JSON parse with
 one repair retry → clamp → persist grade with llm_call and citation links.
 
-Prompt-injection defense (PROJECT_PLAN §13): student content sits between
+Prompt-injection defense (design spec §13): student content sits between
 sentinel delimiters, the system prompt forbids following instructions inside
 them, output is schema-validated, and scores are clamped server-side to
 criterion maxima regardless of what the model returns.

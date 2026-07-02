@@ -2,7 +2,7 @@
 
 Small conveniences over confluent-kafka: topic names in one place, JSON
 publish, and a consumer factory. Events are plain JSON dicts keyed for ordering
-per PROJECT_PLAN §7.2.
+per design spec §7.2.
 """
 
 from __future__ import annotations

@@ -41,7 +41,7 @@ which chunks grounded it.
    artifact_type, top_k)` returns chunks whose source document matches the
    question's topic — hit-rate reported, target **≥90% top-3**.
 4. **Retrieval is fast:** measured over repeated calls — **<50ms cached,
-   <200ms cold** (per PROJECT_PLAN §9 Phase 2 DoD).
+   <200ms cold** (per design spec §9 Phase 2 DoD).
 5. **Reference answers never leak:** chunks flagged `reference_answer: true`
    are excluded from grader-facing retrieval by default (the "how does RAG
    avoid retrieving the reference answer verbatim" interview answer, built in).

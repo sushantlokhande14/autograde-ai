@@ -1,4 +1,4 @@
-"""Redis JSON cache helpers (retrieval keyspace, PROJECT_PLAN §7.4)."""
+"""Redis JSON cache helpers (retrieval keyspace, design spec §7.4)."""
 
 from __future__ import annotations
 

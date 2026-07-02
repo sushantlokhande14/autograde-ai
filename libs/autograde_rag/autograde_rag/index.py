@@ -1,6 +1,6 @@
 """Qdrant collections and idempotent chunk indexing.
 
-Collections per PROJECT_PLAN §7.5. Points are keyed by the chunker's stable
+Collections per design spec §7.5. Points are keyed by the chunker's stable
 uuid5 ids, so re-indexing the same material upserts in place — never
 duplicates. Payloads carry everything retrieval filters or cites on.
 """

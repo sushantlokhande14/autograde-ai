@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 // Router groups a submission's files by student and classifies them by type.
-// Deterministic; no LLM. See PROJECT_PLAN §8 (Parsing pool).
+// Deterministic; no LLM. See design spec §8 (Parsing pool).
 package autograde.v1;
 
 service RouterService {

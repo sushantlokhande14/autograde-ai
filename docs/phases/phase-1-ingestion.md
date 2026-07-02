@@ -76,7 +76,7 @@ graph LR
 ```
 
 State per submission advances `Registered → Parsing → QuestionMapping →
-{AwaitingMapping | Mapped}`, matching PROJECT_PLAN §4.3 (grading states are
+{AwaitingMapping | Mapped}`, matching design spec §4.3 (grading states are
 Phase 3).
 
 **Idempotency:** every file carries a stable `sha256`; re-running ingestion or
@@ -148,7 +148,7 @@ counts against the <3% parse-failure target.
 | `minio` | object storage client | S3 API |
 | `matplotlib`, `reportlab` | synthetic data generator only | Produce plots + PDFs for the test zip |
 
-All are named in or implied by PROJECT_PLAN §8; listing them here for the
+All are named in or implied by design spec §8; listing them here for the
 "new dependency" sign-off rule.
 
 ## Synthetic test data (`scripts/seed_synthetic_data.py`)

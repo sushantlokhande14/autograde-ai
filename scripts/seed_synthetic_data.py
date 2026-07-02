@@ -1,13 +1,13 @@
 """Generate a realistic, messy submissions zip for local testing.
 
-Reproduces the ingestion problem from PROJECT_PLAN §3: nested folders,
+Reproduces the ingestion problem from design spec §3: nested folders,
 inconsistent filenames, and mixed formats (PDF, .ipynb, .py, .png, .txt,
 .docx) whose answers span correct / partial / wrong. Emits three artifacts
 under ``--out``:
 
   <assignment>_submissions.zip   the upload the pipeline ingests
   <assignment>_manifest.json     ground truth: real names + per-file true type/question
-  <assignment>_rubric.json       the rubric (PROJECT_PLAN §7.6 shape)
+  <assignment>_rubric.json       the rubric (design spec §7.6 shape)
 
 Usage:
     uv run python scripts/seed_synthetic_data.py --students 25 --out data/uploads

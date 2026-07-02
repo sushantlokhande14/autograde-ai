@@ -1,7 +1,7 @@
 # Autograde AI — Architecture
 
 This is a condensed architecture reference. The authoritative and complete
-design lives in [`../PROJECT_PLAN.md`](../PROJECT_PLAN.md); this document exists
+design lives in the internal design spec; this document exists
 so the diagrams are one click away during development.
 
 ## Component view

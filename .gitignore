@@ -48,3 +48,6 @@ docker-compose.override.yml
 data/models/
 *.gguf
 *.safetensors
+
+# Internal planning docs (kept local, not published)
+the design spec

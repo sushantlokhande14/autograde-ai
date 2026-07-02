@@ -1,7 +1,7 @@
 -- Autograde AI — Postgres bootstrap.
 -- Runs once on first container init against the primary database.
 -- Two schemas: `grading` (hashed IDs only, pipeline reads/writes) and
--- `identity` (real names, gated behind row-level security). See PROJECT_PLAN §7.
+-- `identity` (real names, gated behind row-level security). See design spec §7.
 
 -- ---------------------------------------------------------------------------
 -- Roles
