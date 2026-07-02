@@ -36,12 +36,26 @@ class PingWorkflow:
         )
 
 
+# artifact type -> grader activities dispatched for it
+_DISPATCH: dict[str, list[tuple[str, int]]] = {
+    "theory": [("grade_theory", 5)],
+    "code": [("grade_code", 10), ("grade_style", 5)],
+    "derivation": [("grade_derivation", 5)],
+    "figure": [("grade_figure", 5)],
+}
+
+
 @workflow.defn
 class GradeStudentWorkflow:
-    """Grade every mapped artifact of one submission. Workflow id: grade-<submission_id>."""
+    """Grade every mapped artifact of one submission, graders fanned out in
+    parallel. A permanently-failing grader yields a zero-confidence placeholder
+    and never kills the workflow (fail loud, fail isolated).
+    Workflow id: grade-<submission_id>."""
 
     @workflow.run
-    async def run(self, submission_id: str) -> list[dict]:
+    async def run(self, submission_id: str) -> dict:
+        import asyncio
+
         artifacts = await workflow.execute_activity(
             "list_gradable_artifacts",
             submission_id,
@@ -49,21 +63,47 @@ class GradeStudentWorkflow:
             retry_policy=_RETRY,
         )
 
-        grades: list[dict] = []
-        for artifact in artifacts:  # sequential in Phase 3; parallel fan-out in Phase 4
-            if artifact["artifact_type"] == "theory":
-                activity = "grade_theory"
-                timeout = timedelta(minutes=5)
-            elif artifact["artifact_type"] == "code":
-                activity = "grade_code"
-                timeout = timedelta(minutes=10)
-            else:
-                continue  # derivation/figure graders arrive in Phase 4
-            grade = await workflow.execute_activity(
-                activity,
-                artifact,
-                start_to_close_timeout=timeout,
-                retry_policy=_RETRY,
-            )
-            grades.append(grade)
-        return grades
+        async def run_one(activity: str, artifact: dict, minutes: int) -> dict:
+            try:
+                return await workflow.execute_activity(
+                    activity,
+                    artifact,
+                    start_to_close_timeout=timedelta(minutes=minutes),
+                    retry_policy=_RETRY,
+                )
+            except Exception:  # placeholder grade; aggregation gates it to review
+                return {
+                    "grader": activity, "question_id": artifact.get("question_id"),
+                    "score": 0.0, "max_score": 0.0, "confidence": 0.0,
+                    "reasoning": "grader failed after retries", "failed": True,
+                }
+
+        tasks = [
+            run_one(activity, artifact, minutes)
+            for artifact in artifacts
+            for activity, minutes in _DISPATCH.get(artifact["artifact_type"], [])
+        ]
+        grades = list(await asyncio.gather(*tasks))
+
+        summary = await workflow.execute_activity(
+            "aggregate_submission",
+            submission_id,
+            start_to_close_timeout=timedelta(minutes=5),
+            retry_policy=_RETRY,
+        )
+        return {"grades": grades, "summary": summary}
+
+
+@workflow.defn
+class PlagiarismWorkflow:
+    """Cohort-level scan for one (assignment, question); run after a batch."""
+
+    @workflow.run
+    async def run(self, params: dict) -> int:
+        report = await workflow.execute_activity(
+            "detect_plagiarism",
+            params,
+            start_to_close_timeout=timedelta(minutes=15),
+            retry_policy=_RETRY,
+        )
+        return len(report)

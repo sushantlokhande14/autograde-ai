@@ -81,3 +81,61 @@ async def grade_code(artifact: dict) -> dict:
         },
     ):
         return await asyncio.to_thread(_grade, artifact)
+
+
+def _spanned(name: str, loader):
+    """Build a grader activity: lazy import, thread offload, OTel span, metric."""
+
+    @activity.defn(name=name)
+    async def _run(artifact: dict) -> dict:
+        import asyncio
+        import time
+
+        from opentelemetry import trace
+
+        from autograde_core.telemetry import grader_duration_histogram
+
+        tracer = trace.get_tracer("autograde.orchestrator")
+        with tracer.start_as_current_span(
+            name, attributes={"autograde.artifact_id": artifact.get("artifact_id", "")}
+        ):
+            started = time.monotonic()
+            result = await asyncio.to_thread(loader(), artifact)
+            grader_duration_histogram().record(
+                (time.monotonic() - started) * 1000, {"grader": name}
+            )
+            return result
+
+    return _run
+
+
+grade_style = _spanned(
+    "grade_style", lambda: __import__(
+        "services.graders.code_style.grader", fromlist=["grade"]).grade
+)
+grade_derivation = _spanned(
+    "grade_derivation", lambda: __import__(
+        "services.graders.derivation.grader", fromlist=["grade"]).grade
+)
+grade_figure = _spanned(
+    "grade_figure", lambda: __import__(
+        "services.graders.figure.grader", fromlist=["grade"]).grade
+)
+
+
+@activity.defn
+async def aggregate_submission(submission_id: str) -> dict:
+    import asyncio
+
+    from services.graders.feedback_synth.synthesizer import aggregate
+
+    return await asyncio.to_thread(aggregate, submission_id)
+
+
+@activity.defn
+async def detect_plagiarism(params: dict) -> list[dict]:
+    import asyncio
+
+    from services.graders.plagiarism.detector import detect
+
+    return await asyncio.to_thread(detect, params["assignment_id"], params["question_id"])

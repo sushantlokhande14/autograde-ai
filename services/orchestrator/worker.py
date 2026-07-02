@@ -13,24 +13,35 @@ from temporalio.client import Client
 from temporalio.worker import Worker
 
 from autograde_core.config import get_settings
-from services.orchestrator.workflows import TASK_QUEUE, GradeStudentWorkflow, PingWorkflow
+from services.orchestrator.workflows import (
+    TASK_QUEUE,
+    GradeStudentWorkflow,
+    PingWorkflow,
+    PlagiarismWorkflow,
+)
 
 log = structlog.get_logger()
 
 
-async def create_worker(client: Client) -> Worker:
+async def create_worker(client: Client, concurrency: int = 8) -> Worker:
     from services.orchestrator import activities
 
     return Worker(
         client,
         task_queue=TASK_QUEUE,
-        workflows=[PingWorkflow, GradeStudentWorkflow],
+        workflows=[PingWorkflow, GradeStudentWorkflow, PlagiarismWorkflow],
         activities=[
             activities.ping,
             activities.list_gradable_artifacts,
             activities.grade_theory,
             activities.grade_code,
+            activities.grade_style,
+            activities.grade_derivation,
+            activities.grade_figure,
+            activities.aggregate_submission,
+            activities.detect_plagiarism,
         ],
+        max_concurrent_activities=concurrency,
     )
 
 

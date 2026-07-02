@@ -36,6 +36,7 @@ def configure_telemetry(service_name: str) -> None:
 
     if settings.otel_endpoint:
         _configure_tracing(service_name, settings.otel_endpoint)
+        _configure_metrics(service_name, settings.otel_endpoint)
 
 
 def _configure_tracing(service_name: str, endpoint: str) -> None:
@@ -54,3 +55,36 @@ def _configure_tracing(service_name: str, endpoint: str) -> None:
     provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
     trace.set_tracer_provider(provider)
+
+
+def _configure_metrics(service_name: str, endpoint: str) -> None:
+    try:
+        from opentelemetry import metrics
+        from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+            OTLPMetricExporter,
+        )
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+        from opentelemetry.sdk.resources import Resource
+    except ImportError:
+        return
+    reader = PeriodicExportingMetricReader(
+        OTLPMetricExporter(endpoint=endpoint), export_interval_millis=10_000
+    )
+    metrics.set_meter_provider(
+        MeterProvider(
+            resource=Resource.create({"service.name": service_name}),
+            metric_readers=[reader],
+        )
+    )
+
+
+def grader_duration_histogram():
+    """Histogram of grader activity duration in ms (label: grader). No-op
+    instrument when no meter provider is configured."""
+    from opentelemetry import metrics
+
+    return metrics.get_meter("autograde").create_histogram(
+        "autograde.grader.duration", unit="ms",
+        description="grader activity duration",
+    )
