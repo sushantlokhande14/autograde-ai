@@ -8,7 +8,7 @@ the app-side view and the source for Alembic's forward migrations.
 from __future__ import annotations
 
 import datetime as dt
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, Float, ForeignKey, Integer, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, NUMERIC
@@ -23,7 +23,7 @@ class Assignment(Base):
     __tablename__ = "assignments"
     __table_args__ = {"schema": "grading"}
 
-    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     course_code: Mapped[str] = mapped_column(Text, nullable=False)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     rubric: Mapped[dict] = mapped_column(JSONB, nullable=False)
@@ -38,7 +38,7 @@ class Submission(Base):
         {"schema": "grading"},
     )
 
-    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     assignment_id: Mapped[UUID | None] = mapped_column(ForeignKey("grading.assignments.id"))
     student_hash: Mapped[str] = mapped_column(Text, nullable=False)
     ingested_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -48,7 +48,7 @@ class Artifact(Base):
     __tablename__ = "artifacts"
     __table_args__ = {"schema": "grading"}
 
-    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     submission_id: Mapped[UUID] = mapped_column(ForeignKey("grading.submissions.id"))
     source_file: Mapped[str] = mapped_column(Text, nullable=False)
     artifact_type: Mapped[str] = mapped_column(Text, nullable=False)
@@ -64,7 +64,7 @@ class Grade(Base):
     __tablename__ = "grades"
     __table_args__ = {"schema": "grading"}
 
-    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     submission_id: Mapped[UUID] = mapped_column(ForeignKey("grading.submissions.id"))
     question_id: Mapped[str] = mapped_column(Text, nullable=False)
     grader: Mapped[str] = mapped_column(Text, nullable=False)
@@ -83,7 +83,7 @@ class Review(Base):
     __tablename__ = "reviews"
     __table_args__ = {"schema": "grading"}
 
-    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     submission_id: Mapped[UUID] = mapped_column(ForeignKey("grading.submissions.id"))
     question_id: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False)
@@ -97,7 +97,7 @@ class LlmCall(Base):
     __tablename__ = "llm_calls"
     __table_args__ = {"schema": "grading"}
 
-    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     grader: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(Text, nullable=False)
     backend: Mapped[str] = mapped_column(Text, nullable=False)
@@ -115,7 +115,7 @@ class SandboxRun(Base):
     __tablename__ = "sandbox_runs"
     __table_args__ = {"schema": "grading"}
 
-    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     submission_id: Mapped[UUID] = mapped_column(ForeignKey("grading.submissions.id"))
     test_case_id: Mapped[str] = mapped_column(Text, nullable=False)
     exit_code: Mapped[int | None] = mapped_column(Integer)
