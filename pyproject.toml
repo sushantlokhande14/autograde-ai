@@ -24,6 +24,8 @@ dependencies = [
     "temporalio>=1.7",
     "sympy>=1.13",
     "ruff>=0.7",
+    "strawberry-graphql[fastapi]>=0.246",
+    "python-multipart>=0.0.12",
 ]
 
 [dependency-groups]

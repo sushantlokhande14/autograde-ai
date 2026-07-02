@@ -1,24 +1,21 @@
-"""API gateway.
+"""API gateway: GraphQL (queries/mutations/subscriptions) + upload intake.
 
-Phase 0 gave this service /healthz; Phase 1 adds the minimal review surface for
-low-confidence question mappings (list + confirm). The full GraphQL schema
-replaces these REST stubs in Phase 5 — they exist so the review queue is real,
-not a mock, from the first phase that produces gated artifacts.
+Phase 5 retires the Phase 1 REST review stubs — the review queue now lives in
+the GraphQL schema. The one non-GraphQL route left is the multipart upload,
+which stages the class zip and rubric and kicks the existing ingestion
+pipeline.
 """
 
 from __future__ import annotations
 
-from uuid import UUID
+import json
 
-from fastapi import HTTPException
+from fastapi import File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from strawberry.fastapi import GraphQLRouter
 
-from autograde_core.events import Topic, get_producer, publish
 from autograde_core.health import create_health_app
-from autograde_db import repository as repo
-from autograde_db.session import session_scope
-from services.question_mapper.mapper import CONFIDENCE_GATE
+from services.api.schema import schema
 
 SERVICE_NAME = "api"
 app = create_health_app(SERVICE_NAME)
@@ -29,61 +26,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class PendingMapping(BaseModel):
-    artifact_id: UUID
-    source_file: str
-    artifact_type: str
-    question_id: str | None
-    confidence: float | None
+app.include_router(GraphQLRouter(schema), prefix="/graphql")
 
 
-class ConfirmRequest(BaseModel):
-    question_id: str
+@app.post("/upload")
+async def upload(
+    submissions: UploadFile = File(...),
+    rubric: UploadFile = File(...),
+    roster: UploadFile = File(...),
+) -> dict:
+    """Stage a class upload and route it through ingestion (Kafka-driven)."""
+    import asyncio
 
+    from autograde_core.models import Rubric
+    from autograde_core.rubric import validate_rubric
+    from services.orchestrator.ingest_worker import run as drain
+    from services.router.router import route
 
-@app.get("/mappings/pending")
-def pending_mappings() -> list[PendingMapping]:
-    """Artifacts whose question mapping is below the confidence gate."""
-    with session_scope() as session:
-        rows = repo.low_confidence_artifacts(session, threshold=CONFIDENCE_GATE)
-        return [
-            PendingMapping(
-                artifact_id=r.id,
-                source_file=r.source_file,
-                artifact_type=r.artifact_type,
-                question_id=r.question_id,
-                confidence=r.question_mapping_confidence,
-            )
-            for r in rows
-        ]
+    rubric_data = json.loads(await rubric.read())
+    validated: Rubric = validate_rubric(rubric_data)
+    roster_data = json.loads(await roster.read())
+    roster_map = {s["canvas_id"]: s["display_name"] for s in roster_data["students"]}
+    zip_bytes = await submissions.read()
 
-
-@app.post("/mappings/{artifact_id}/confirm")
-def confirm_mapping(artifact_id: UUID, body: ConfirmRequest) -> dict[str, str]:
-    """Instructor confirms a mapping; confidence becomes 1.0 and the event fires."""
-    with session_scope() as session:
-        from autograde_db.models import Artifact
-
-        row = session.get(Artifact, artifact_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="artifact not found")
-        repo.set_artifact_mapping(
-            session, artifact_id=artifact_id, question_id=body.question_id, confidence=1.0
+    def _ingest() -> tuple[int, int]:
+        result = route(
+            zip_bytes,
+            assignment_key=validated.assignment_id,
+            roster=roster_map,
+            rubric=validated,
+            publish_events=True,
         )
-        submission_id = str(row.submission_id)
+        drain(group=f"upload-{validated.assignment_id}", idle_timeout_s=10.0)
+        return len(result.registrations), len(result.unrouted)
 
-    producer = get_producer()
-    publish(
-        producer,
-        Topic.QUESTION_MAPPED,
-        key=submission_id,
-        value={
-            "artifact_id": str(artifact_id),
-            "question_id": body.question_id,
-            "confidence": 1.0,
-            "method": "instructor",
-        },
-    )
-    producer.flush(5)
-    return {"status": "confirmed", "question_id": body.question_id}
+    registered, unrouted = await asyncio.to_thread(_ingest)
+    return {
+        "assignment_id": validated.assignment_id,
+        "files_registered": registered,
+        "files_unrouted": unrouted,
+    }
