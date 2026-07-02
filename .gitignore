@@ -55,3 +55,4 @@ the design spec
 # Generated gold-set content (regenerate via scripts/generate_eval_set.py)
 tests/eval/gold_set/*
 !tests/eval/gold_set/.gitkeep
+demo_*.bat
