@@ -4,7 +4,10 @@
 **Branch:** `phase-5-dashboard`.
 **Prerequisite:** Phase 4 complete (`phase-4-complete` tag); graded class data
 in the stack makes every view demonstrable with real rows.
-**Open decisions:** three, listed at the end.
+**Decisions:** resolved on review — **Strawberry-on-FastAPI** serves the
+schema (Apollo stays client-side); **regrade starts a fresh workflow** with
+audit lineage (no long-open signal waits); styling stays **hand-rolled
+Tailwind** with shadcn/ui deferred to a polish pass.
 
 ---
 
