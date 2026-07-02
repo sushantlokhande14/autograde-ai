@@ -27,7 +27,10 @@ class AuditedLLMClient(LLMClient):
 
     def complete(self, request: CompletionRequest) -> CompletionResult:
         result = self.inner.complete(request)
-        call_id = UUID(result.llm_call_id) if result.llm_call_id else uuid4()
+        # Always mint a fresh audit id: a prompt-cache hit replays the original
+        # completion, whose llm_call_id already has an audit row — reusing it
+        # collides on the primary key and loses cache-hit accounting.
+        call_id = uuid4()
         result.llm_call_id = str(call_id)
         try:
             self._persist(call_id, request, result)

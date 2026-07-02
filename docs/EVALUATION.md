@@ -35,4 +35,32 @@ submission with rubric + answer, no agents, no retrieval, no confidence gate. If
 the multi-agent architecture does not beat the baseline on agreement,
 calibration, or cost, that is reported honestly as a finding.
 
-_Numbers land here in Phase 6._
+## Preliminary results (Phase 4 class-scale benchmark)
+
+250-submission benchmark class (931 artifacts, 4-question rubric), CPU-only
+inference (qwen2.5:3b via Ollama), single dev box, worker concurrency 6:
+
+| Measure | Result |
+|---|---|
+| Ingestion (route + parse + map) | 7.8 min |
+| Grading (full roster, parallel) | **9.2 min** (target <30) |
+| Per-submission grading | 2.2 s median |
+| Sandbox runs | 323, p50 1.05s / p99 2.05s under gVisor |
+| Grade rows written | 2,841 |
+| Feedback narratives | 250 (p50 9.7s per uncached call) |
+| Uncached LLM latency | theory p50 17.3s · code-interpret 7.6s · style 7.3s · derivation 5.6s · figure 4.4s |
+
+**Honest read of the 9.2-minute number.** The benchmark corpus intentionally
+reuses a small set of answer variants, so the Redis prompt cache absorbed the
+large majority of grading calls (269 theory grades from ~14 uncached
+completions). Real classes have unique answers: projecting 0% prompt-cache
+hits at the measured uncached latencies gives **~90–120 minutes** for 250
+submissions on this CPU-only box, or **inside the 30-minute target** on the
+design spec's reference hardware (GPU-served models at ≥10× token
+throughput). Both numbers are reported; neither is hidden behind the other.
+The template-reasoning fast path (no LLM call on unambiguous test outcomes)
+and deterministic-first grader cores are what keep the unique-answer
+projection within an overnight-batch envelope even on CPU.
+
+_Final metrics (agreement, Brier calibration, overturn rate) land in Phase 6
+against the hand-graded gold set._

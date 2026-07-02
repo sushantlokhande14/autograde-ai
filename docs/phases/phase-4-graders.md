@@ -1,6 +1,17 @@
 # Phase 4 — Full Grader Roster + Parallelism
 
-**Status:** plan for review (no code yet).
+**Status:** complete — all DoD items verified (2026-07-01). Results: all six
+graders + meta-agents live with parallel fan-out and failure isolation;
+small-batch roster e2e 4/4 (blend math exact, reviews enqueued, plagiarism
+rows persisted); class benchmark **250 submissions ingested in 7.8 min and
+graded in 9.2 min** (2,841 grade rows, 323 gVisor sandbox runs p50 1.05s) —
+with the honest caveat that duplicated synthetic answers let the prompt cache
+absorb most calls; the unique-answer projection is ~90–120 min on this CPU
+box and inside 30 min on reference hardware (see EVALUATION.md). Grafana
+dashboard queries verified against live Prometheus metric names. Incidents:
+one Docker Desktop engine crash under memory pressure (restarted, rerun
+clean); two real bugs fixed (ORM PK defaults, audit-row PK collision on
+prompt-cache hits — 65 unit tests green after both).
 **Branch:** `phase-4-graders`.
 **Prerequisite:** Phase 3 complete (`phase-3-complete` tag); stack + Ollama +
 WSL gVisor sandbox operational.
