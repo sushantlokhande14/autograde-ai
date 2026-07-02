@@ -52,6 +52,8 @@ def index_chunks(
     batch_size: int = 64,
 ) -> int:
     """Embed and upsert chunks. Returns the number of points written."""
+    from uuid import NAMESPACE_URL, uuid5
+
     client = client or get_qdrant()
     total = 0
     for start in range(0, len(chunks), batch_size):
@@ -59,7 +61,10 @@ def index_chunks(
         vectors = embed_texts([c.text for c in batch])
         points = [
             PointStruct(
-                id=str(c.chunk_id),
+                # Point id is per (chunk, assignment): the same course material
+                # indexed for two assignments must be two points, or the second
+                # upsert would overwrite the first's payload.
+                id=str(uuid5(NAMESPACE_URL, f"{c.chunk_id}:{assignment_id}")),
                 vector=v,
                 payload={
                     "assignment_id": assignment_id,
