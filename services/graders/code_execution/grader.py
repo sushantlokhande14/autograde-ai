@@ -85,6 +85,30 @@ def _question_for(assignment_key: str, question_id: str) -> RubricQuestion:
     raise LookupError(f"question '{question_id}' not found in '{assignment_key}'")
 
 
+def template_reasoning(question: RubricQuestion, result: SandboxResult, score: float) -> tuple[float, str] | None:
+    """Deterministic reasoning for unambiguous outcomes — no LLM call needed."""
+    n = len(question.test_cases)
+    passed = sum(1 for c in result.case_results if c.get("ok"))
+    if result.timed_out:
+        return 0.95, (
+            f"Execution exceeded the {get_settings().sandbox_timeout_s}s wall-clock limit and "
+            f"was terminated; 0/{n} test cases completed. Score 0/{question.weight}."
+        )
+    if result.fatal_error is not None and not result.case_results:
+        first = result.fatal_error.strip().splitlines()[-1][:160]
+        return 0.95, (
+            f"The submission failed before any test ran ({first}). "
+            f"0/{n} test cases passed; score 0/{question.weight}."
+        )
+    if passed == n and n > 0:
+        return 0.97, f"All {n} test cases passed; full credit {question.weight}/{question.weight}."
+    if passed == 0 and result.case_results:
+        errors = {c.get("error") for c in result.case_results if c.get("error")}
+        hint = f" Common error: {next(iter(errors))[:120]}." if errors else ""
+        return 0.95, f"All {n} test cases failed.{hint} Score 0/{question.weight}."
+    return None  # partial pass: worth LLM prose
+
+
 def grade(artifact: dict, client: LLMClient | None = None) -> dict:
     content = storage.get_json("normalized-artifacts", artifact["content_ref"])
     assignment_key = artifact["content_ref"].split("/", 1)[0]
@@ -101,6 +125,25 @@ def grade(artifact: dict, client: LLMClient | None = None) -> dict:
         },
     )
     score, breakdown = deterministic_score(question, result)
+
+    templated = template_reasoning(question, result, score)
+    if templated is not None:
+        confidence, reasoning = templated
+        grade_id = uuid4()
+        _persist(grade_id, artifact, question, score, breakdown, confidence, reasoning, result, None)
+        return {
+            "grade_id": str(grade_id),
+            "grader": GRADER_NAME,
+            "question_id": artifact["question_id"],
+            "score": score,
+            "max_score": question.weight,
+            "confidence": confidence,
+            "reasoning": reasoning,
+            "breakdown": breakdown,
+            "sandbox_run_id": str(result.run_id),
+            "llm_call_id": None,
+            "timed_out": result.timed_out,
+        }
 
     outcomes = json.dumps(
         {
