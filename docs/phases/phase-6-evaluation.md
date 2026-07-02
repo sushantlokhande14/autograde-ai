@@ -65,17 +65,16 @@ secret.
 | P6.5 | `feat: calibration drift agent and concurrent load test` | drift re-grade vs frozen reference + alert; two-assignment concurrency test |
 | P6.6 | `docs: final evaluation write-up` | EVALUATION.md with all numbers, methodology, and honest caveats (blocked on your grading passes) |
 
-## Open decisions for this phase
+## Decisions for this phase
 
-1. **Gap between your two grading passes.** The spec says one week (best
-   inter-rater hygiene). Options: **(a) one week** — phase stays open,
-   everything else finishes meanwhile; **(b) 1–2 days (recommended)** —
-   documented deviation, phase closes this week; **(c) single pass** — no
-   human ceiling, weakest claim.
-2. **Paid-tier cost metric.** The $/grade (paid) target needs real Anthropic
-   API calls on a gold subset. **(a) Local-only now (recommended)** — report
-   local cost; paid-tier measured if/when you add a key; **(b) you provide
-   ANTHROPIC_API_KEY** and I measure a 20-submission paid sample (~$1–3).
+1. **Grading gap — RESOLVED: full week, spec-true.** Pass 2 happens ≥7 days
+   after pass 1. The phase stays open across the gap; all machine-side work
+   completes meanwhile. Critical path: the pass-1 workbook ships first.
+2. **Paid-tier cost — RESOLVED: measured-local, estimated-flagship.** Local
+   token volumes are measured from `grading.llm_calls`; the paid-tier $/grade
+   cell is computed by applying published flagship API pricing (with and
+   without prompt-cache discount) to those measured volumes, clearly labeled
+   an **estimate** — no hosted calls are made.
 
 ## How to verify (once built)
 
