@@ -1,6 +1,14 @@
 # Phase 5 — Dashboard & GraphQL
 
-**Status:** plan for review (no code yet).
+**Status:** complete — all DoD items verified (2026-07-01). GraphQL schema
+locked (Strawberry, subscriptions over WebSocket); five views built and the
+Next.js production build is clean; the instructor-loop e2e passes 6/6 against
+the graded 250-class (progress, confidence-sorted queue, approve/edit
+persisted, three-click audit with real prompt payloads and citations, rubric
+validation errors, live preview-grade); dashboard uploads feed the ingestion
+pipeline; 65 unit tests green. Note: the queue/audit views were verified
+through the exact GraphQL operations they issue; a browser-driven pass is a
+worthwhile Phase 6 polish item.
 **Branch:** `phase-5-dashboard`.
 **Prerequisite:** Phase 4 complete (`phase-4-complete` tag); graded class data
 in the stack makes every view demonstrable with real rows.
