@@ -4,7 +4,10 @@
 **Branch:** `phase-4-graders`.
 **Prerequisite:** Phase 3 complete (`phase-3-complete` tag); stack + Ollama +
 WSL gVisor sandbox operational.
-**Open decisions:** two, listed at the end.
+**Decisions:** resolved on review — FigureGrader uses **OCR + metadata +
+text-LLM** (vision model deferred to V2); the load test **measures and
+reports the true wall-clock** with a projection for the plan's reference
+hardware.
 
 ---
 
@@ -115,20 +118,16 @@ on CPU ≈ 2+ hours. The plan's target is <30 minutes. Knobs used here:
 | P4.8 | `feat: parallel fan-out and grader dashboards` | gather-based dispatch, failure isolation, OTel metrics + provisioned dashboard |
 | P4.9 | `test: class-scale load test` | 250×4 benchmark run, measured numbers into EVALUATION.md; docs close-out |
 
-## Open decisions for this phase
+## Decisions for this phase
 
-1. **FigureGrader vision model.** (a) **OCR + metadata + text-LLM now
-   (recommended)** — zero new pulls, fits the CPU budget; a real vision model
-   (moondream ~1.7GB or llava:7b ~4.7GB) becomes the V2 upgrade alongside
-   diagram understanding. (b) Pull a small vision model now — richer plot
-   judgment, adds ~2–6s/figure on CPU and another model in RAM alongside 3b.
-2. **Load-test target honesty.** (a) **Measure and report the true wall-clock
-   (recommended)** — if CPU inference lands over 30 minutes, EVALUATION.md
-   records the measured number plus the projected number on the plan's
-   reference hardware (48GB VRAM), which is the honest, interviewable story.
-   (b) Hard-require <30 min on this box — achievable only by cutting LLM prose
-   from most of the pipeline, which guts the feedback quality the system is
-   supposed to demonstrate.
+1. **FigureGrader — RESOLVED: OCR + metadata + text-LLM.** Phase 1 artifacts
+   already carry Tesseract OCR text and image metadata; a required-element
+   checklist plus a capped text-LLM interpretation grades the plotting
+   question. A real vision model is the V2 upgrade.
+2. **Load test — RESOLVED: measure and report honestly.** The benchmark
+   records the true wall-clock on this CPU-only box in EVALUATION.md, next to
+   a projection for the plan's 48GB-VRAM reference hardware. No quality
+   stripping to force the number.
 
 ## How to verify (once built)
 
